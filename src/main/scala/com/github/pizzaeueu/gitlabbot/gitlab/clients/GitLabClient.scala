@@ -50,7 +50,7 @@ case class GitLabClientLive(appConfig: AppConfig, factory: ChannelFactory, event
     )
     _ <- ZIO.logInfo(url)
     ids = userIds.map(id => s"\"$id\"").mkString(",")
-    reqContent = HttpData.fromString(s"{\"assignee_ids\": [$ids]}")
+    reqContent = HttpData.fromString(s"{\"reviewer_ids\": [$ids]}")
     res <- Client
       .request(
         url = url,
@@ -67,5 +67,5 @@ case class GitLabClientLive(appConfig: AppConfig, factory: ChannelFactory, event
     _ <- ZIO.logInfo(s"Mr update result: $strBody")
   yield()
 
-object GitLabClient extends Accessible[GitLabClient]:
-  def live: RLayer[AppConfig & ChannelFactory & EventLoopGroup, GitLabClient] = (GitLabClientLive.apply _).toLayer
+object GitLabClient:
+  def live: RLayer[AppConfig & ChannelFactory & EventLoopGroup, GitLabClient] = ZLayer.fromFunction(GitLabClientLive.apply)

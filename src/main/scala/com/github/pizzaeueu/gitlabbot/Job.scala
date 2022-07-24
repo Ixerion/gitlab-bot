@@ -25,7 +25,7 @@ case class JobLive(
     _   <- ZIO.logInfo("Starting job")
     mrs <- gitLabService.getMrsList()
     _   <- ZIO.logDebug(s"loaded mrs: \n $mrs")
-    unassignedMrs: List[MRInfo] = mrs.filter { mr => mr.assignees.isEmpty }
+    unassignedMrs: List[MRInfo] = mrs.filter { mr => mr.reviewers.isEmpty }
     info    <- ZIO.collectAll(unassignedMrs.map(assign))
     message <- messageBuilder.buildMrAssignmentMessage(info)
     _       <- slackClient.sendMessage(message.toJson)
@@ -36,5 +36,5 @@ case class JobLive(
     _         <- gitLabService.assignToMr(mrInfo, assignees)
   yield (mrInfo, assignees)
 
-object Job extends Accessible[Job]:
-  def live: RLayer[AppConfig & SlackClient & GitLabService & AssigneesHandler & MessageBuilder, Job] = (JobLive.apply _).toLayer
+object Job:
+  def live: RLayer[AppConfig & SlackClient & GitLabService & AssigneesHandler & MessageBuilder, Job] = ZLayer.fromFunction(JobLive.apply)
